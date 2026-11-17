@@ -79,7 +79,10 @@ describe('buildQuery', () => {
 })
 
 describe('findPharmacies', () => {
-  afterEach(() => vi.unstubAllGlobals())
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.useRealTimers()
+  })
 
   const jsonResponse = (body: OverpassResponse) => new Response(JSON.stringify(body), { status: 200 })
 
@@ -113,8 +116,31 @@ describe('findPharmacies', () => {
     expect(fetchMock.mock.calls[1][0]).not.toBe(fetchMock.mock.calls[0][0])
   })
 
-  it('throws when every endpoint fails', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => new Response('busy', { status: 429 })))
-    await expect(findPharmacies(origin)).rejects.toThrow('Overpass returned 429')
+  it('backs off and retries when every endpoint is busy', async () => {
+    vi.useFakeTimers()
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('busy', { status: 504 }))
+      .mockResolvedValueOnce(new Response('busy', { status: 504 }))
+      .mockResolvedValueOnce(jsonResponse(response))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = findPharmacies(origin)
+    await vi.runAllTimersAsync()
+
+    expect(await result).toHaveLength(3)
+    expect(fetchMock).toHaveBeenCalledTimes(3)
+  })
+
+  it('throws after the last retry fails', async () => {
+    vi.useFakeTimers()
+    const fetchMock = vi.fn(async () => new Response('busy', { status: 429 }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = expect(findPharmacies(origin)).rejects.toThrow('Overpass returned 429')
+    await vi.runAllTimersAsync()
+
+    await result
+    expect(fetchMock).toHaveBeenCalledTimes(6)
   })
 })
