@@ -20,14 +20,15 @@ export function PharmacyMap({ origin, pharmacies }: Props) {
     }).addTo(map)
 
     // Circle markers avoid Leaflet's default icon images, which need extra bundler config.
-    L.circleMarker([origin.lat, origin.lon], { radius: 8, className: 'marker-user' })
-      .bindTooltip('You are here')
-      .addTo(map)
     pharmacies.forEach((p, i) => {
       L.circleMarker([p.lat, p.lon], { radius: i === 0 ? 10 : 7, className: i === 0 ? 'marker-nearest' : 'marker' })
         .bindTooltip(p.name)
         .addTo(map)
     })
+    // Added last so it stays visible on top of a pharmacy right next to the user.
+    L.circleMarker([origin.lat, origin.lon], { radius: 8, className: 'marker-user' })
+      .bindTooltip('Search location')
+      .addTo(map)
 
     const bounds = L.latLngBounds([[origin.lat, origin.lon], ...pharmacies.map((p): [number, number] => [p.lat, p.lon])])
     map.fitBounds(bounds, { padding: [24, 24], maxZoom: 16 })
