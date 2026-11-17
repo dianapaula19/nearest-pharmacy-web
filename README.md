@@ -2,6 +2,8 @@
 
 Finds the pharmacy nearest to you and shows it with its distance, address, opening hours and a **Directions** button, plus a map and the next ten nearest.
 
+Its iOS counterpart is [nearest-pharmacy-ios](https://github.com/dianapaula19/nearest-pharmacy-ios).
+
 <p>
   <img src="docs/mobile-light.png" alt="Nearest pharmacy in Helsinki on a phone, light mode" width="280">
   <img src="docs/desktop-dark.png" alt="Search results for Tampere on desktop, dark mode" width="520">
